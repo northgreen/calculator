@@ -301,3 +301,4 @@ src/GraphControl/GraphingImplOverrides.props
 
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
+dist/
