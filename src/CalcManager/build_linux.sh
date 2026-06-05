@@ -19,6 +19,17 @@ buildManager() {
 		CEngine/*.cpp Ratpack/*.cpp *.cpp -I.
 }
 
-buildManager "g++" "x64"
-buildManager "arm-linux-gnueabihf-g++" "arm"
-buildManager "aarch64-linux-gnu-g++" "arm64"
+# 接受可选架构参数：x64 / arm / arm64 / all（默认）
+ARCH="${1:-all}"
+
+if [[ "$ARCH" == "all" || "$ARCH" == "x64" ]]; then
+    buildManager "g++" "x64"
+fi
+
+if [[ "$ARCH" == "all" || "$ARCH" == "arm" ]]; then
+    buildManager "arm-linux-gnueabihf-g++" "arm"
+fi
+
+if [[ "$ARCH" == "all" || "$ARCH" == "arm64" ]]; then
+    buildManager "aarch64-linux-gnu-g++" "arm64"
+fi

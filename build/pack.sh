@@ -139,7 +139,7 @@ build_calcmanager() {
     fi
     
     # 使用子 shell 执行构建脚本，确保在正确的目录运行
-    if (cd "$calcmanager_dir" && bash build_linux.sh); then
+    if (cd "$calcmanager_dir" && bash build_linux.sh "$arch"); then
         echo "✓ CalcManager for $arch 构建成功"
     else
         local exit_code=$?
