@@ -221,6 +221,13 @@ namespace CalculatorApp.ViewModel
         private int m_OpenParenthesisCount;
         public int OpenParenthesisCount { get => m_OpenParenthesisCount; private set { m_OpenParenthesisCount = value; RaisePropertyChanged("OpenParenthesisCount"); } }
 
+        private string m_LeftParenthesisAutomationName;
+        public string LeftParenthesisAutomationName
+        {
+            get => m_LeftParenthesisAutomationName;
+            private set { m_LeftParenthesisAutomationName = value; RaisePropertyChanged("LeftParenthesisAutomationName"); }
+        }
+
         public ICommand CopyCommand { get; }
 
         public ICommand PasteCommand { get; }
@@ -568,6 +575,7 @@ namespace CalculatorApp.ViewModel
             // Initialize the Automation Name
             CalculationResultAutomationName = GetLocalizedStringFormat(m_localizedCalculationResultAutomationFormat, m_DisplayValue);
             CalculationExpressionAutomationName = GetLocalizedStringFormat(m_expressionAutomationNameFormat, "");
+            LeftParenthesisAutomationName = GetLocalizedStringFormat(AppResourceProvider.GetInstance().GetResourceString("Format_OpenParenthesisCountAutomationNamePrefix"), "0");
 
             // Initialize history view model
             m_HistoryVM = new HistoryViewModel(m_standardCalculatorManager);
@@ -686,6 +694,7 @@ namespace CalculatorApp.ViewModel
             }
 
             OpenParenthesisCount = parenthesisCount;
+            LeftParenthesisAutomationName = GetLocalizedStringFormat(AppResourceProvider.GetInstance().GetResourceString("Format_OpenParenthesisCountAutomationNamePrefix"), m_OpenParenthesisCount.ToString());
             if (IsProgrammer || IsScientific)
             {
                 SetOpenParenthesisCountNarratorAnnouncement();
