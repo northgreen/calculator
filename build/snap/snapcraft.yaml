@@ -1,5 +1,5 @@
 name: uno-calculator
-base: core18
+base: core22
 summary: The Uno Calculator
 description: |
   The powerful Uno Calculator receives a makeover from Uno Platform with a wide variety of features.
@@ -23,11 +23,14 @@ parts:
       - libfontconfig1
       - libfreetype6
       - libpng16-16
-
-      # https://github.com/dotnet/core/blob/115fc55fc44cde03d3dd8af96e38a8350710ed99/release-notes/7.0/linux-packages.md?plain=1#L84
       - libgssapi-krb5-2
       - libstdc++6
-      - zlib1g 
+      - zlib1g
+      # .NET 9 dependencies for Ubuntu 22.04 (core22)
+      - libicu72
+      - libssl3
+      - libgcc-s1
+      - libglib2.0-0
 
     source: 
       - on amd64: Calculator/skia/Calculator-linux-x64.zip
@@ -45,7 +48,7 @@ parts:
 
 apps:
   uno-calculator:
-    extensions: [gnome-3-28]
+    extensions: [gnome]
     command: Calculator.Skia.Gtk
     plugs:
       - network

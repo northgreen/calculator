@@ -53,3 +53,54 @@ This project collects usage data and sends it to App Center to help improve the 
 
 ## Reporting Security Issues
 Security issues and bugs should be reported through the [GitHub security tab](https://github.com/nventive/calculator/security).
+
+## 打包
+
+本项目提供统一的打包脚本 `build/pack.sh`，支持构建 Linux x64/ARM64 zip 包和 Snap 包。
+
+### 先决条件
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- g++ (C++20)
+- snapcraft (可选，用于构建 Snap 包)
+- aarch64-linux-gnu-g++ (可选，用于 ARM64 交叉编译)
+
+### 用法
+
+```bash
+# 构建所有支持的格式
+./build/pack.sh
+
+# 仅构建 Linux x64 zip 包
+./build/pack.sh --platform linux-x64 --format zip
+
+# 仅构建 Snap 包
+./build/pack.sh --platform linux-x64 --format snap
+
+# 检查先决条件
+./build/pack.sh --check
+
+# 查看帮助
+./build/pack.sh --help
+```
+
+### 输出产物
+
+打包产物位于 `dist/` 目录：
+
+| 平台        | 格式 | 输出文件                        |
+| ----------- | ---- | ------------------------------- |
+| Linux x64   | zip  | `dist/Calculator-linux-x64.zip`   |
+| Linux x64   | Snap | `dist/uno-calculator_*.snap`      |
+| Linux ARM64 | zip  | `dist/Calculator-linux-arm64.zip` |
+| Linux ARM64 | Snap | `dist/uno-calculator_*.snap`      |
+
+### CI/CD
+
+本项目使用 GitHub Actions 进行自动化构建：
+
+- **Push/PR**: 自动触发 x64 zip/Snap 和 ARM64 zip 构建
+- **手动触发**: 可通过 GitHub Actions 页面手动触发构建
+- **产物**: 构建产物保留 30 天
+
+也可在 [GitHub Actions](https://github.com/unoplatform/calculator/actions) 中查看构建状态。
