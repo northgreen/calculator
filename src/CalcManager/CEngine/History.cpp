@@ -5,6 +5,7 @@
 #include "Command.h"
 #include "CalculatorVector.h"
 #include "ExpressionCommand.h"
+#include "ExpressionCommandInterface.h"
 
 constexpr int ASCII_0 = 48;
 
@@ -196,7 +197,7 @@ void CHistoryCollector::EnclosePrecInversionBrackets()
     IchAddSzToEquationSz(CCalcEngine::OpCodeToString(IDC_CLOSEP), -1);
 }
 
-bool CHistoryCollector::FOpndAddedToHistory()
+bool CHistoryCollector::FOpndAddedToHistory() const
 {
     return (-1 != m_lastOpStartIndex);
 }
@@ -454,7 +455,7 @@ void CHistoryCollector::SetDecimalSymbol(wchar_t decimalSymbol)
 }
 
 // Update the commands corresponding to the passed string Number
-std::shared_ptr<CalculatorVector<int>> CHistoryCollector::GetOperandCommandsFromString(wstring_view numStr)
+std::shared_ptr<CalculatorVector<int>> CHistoryCollector::GetOperandCommandsFromString(std::wstring_view numStr) const
 {
     std::shared_ptr<CalculatorVector<int>> commands = std::make_shared<CalculatorVector<int>>();
     // Check for negate
@@ -493,4 +494,47 @@ std::shared_ptr<CalculatorVector<int>> CHistoryCollector::GetOperandCommandsFrom
         IFT(commands->Append(IDC_SIGN));
     }
     return commands;
+}
+
+std::vector<std::shared_ptr<IExpressionCommand>> CHistoryCollector::GetCommands() const
+{
+    std::vector<std::shared_ptr<IExpressionCommand>> result;
+    if (m_spCommands != nullptr)
+    {
+        unsigned int size = 0;
+        m_spCommands->GetSize(&size);
+        for (unsigned int i = 0; i < size; ++i)
+        {
+            std::shared_ptr<IExpressionCommand> cmd;
+            if (SUCCEEDED(m_spCommands->GetAt(i, &cmd)))
+            {
+                result.push_back(cmd);
+            }
+        }
+    }
+    return result;
+}
+
+std::shared_ptr<IExpressionCommand> CHistoryCollector::GetOperandCommandForSnapshot(std::wstring_view numStr, Rational const& rat) const
+{
+    auto commands = GetOperandCommandsFromString(numStr);
+
+    bool fNegative = (numStr[0] == L'-');
+    bool fDecimal = false;
+    bool fSciFmt = false;
+    for (size_t i = (fNegative ? 1 : 0); i < numStr.length(); i++)
+    {
+        if (numStr[i] == m_decimalSymbol)
+        {
+            fDecimal = true;
+        }
+        else if (numStr[i] == L'e')
+        {
+            fSciFmt = true;
+        }
+    }
+
+    auto opndCommand = std::make_shared<COpndCommand>(commands, fNegative, fDecimal, fSciFmt);
+    opndCommand->Initialize(rat);
+    return opndCommand;
 }

@@ -102,6 +102,9 @@ namespace CalculationManager
         void MaxDigitsReached() override;
         void BinaryOperatorReceived() override;
         void MemoryItemChanged(unsigned int indexOfMemory) override;
+        void InputChanged() override;
+        bool IsInputEmpty();
+        std::vector<std::shared_ptr<IExpressionCommand>> GetDisplayCommandsSnapshot() const;
 
         CalculatorManager(ICalcDisplay* displayCallback, IResourceProvider* resourceProvider);
         ~CalculatorManager();
@@ -135,13 +138,14 @@ namespace CalculationManager
         }
         void SetRadix(RADIX_TYPE iRadixType);
         void SetMemorizedNumbersString();
-        std::wstring GetResultForRadix(uint32_t radix, int32_t precision);
+        std::wstring GetResultForRadix(uint32_t radix, int32_t precision, bool groupDigitsPerRadix);
         void SetPrecision(int32_t precision);
         void UpdateMaxIntDigits();
         wchar_t DecimalSeparator();
 
-        std::vector<std::shared_ptr<HISTORYITEM>> const& GetHistoryItems();
-        std::vector<std::shared_ptr<HISTORYITEM>> const& GetHistoryItems(_In_ CalculationManager::CALCULATOR_MODE mode);
+        const std::vector<std::shared_ptr<HISTORYITEM>>& GetHistoryItems() const;
+        const std::vector<std::shared_ptr<HISTORYITEM>>& GetHistoryItems(_In_ CalculationManager::CALCULATOR_MODE mode) const;
+        const std::vector<std::shared_ptr<HISTORYITEM>>& GetHistoryItems(_In_ CalculatorMode mode) const;
         std::shared_ptr<HISTORYITEM> const& GetHistoryItem(_In_ unsigned int uIdx);
         bool RemoveHistoryItem(_In_ unsigned int uIdx);
         void ClearHistory();
@@ -151,6 +155,8 @@ namespace CalculationManager
         }
         CalculationManager::Command GetCurrentDegreeMode();
         void SetHistory(_In_ CALCULATOR_MODE eMode, _In_ std::vector<std::shared_ptr<HISTORYITEM>> const& history);
+        void SetHistoryItems(_In_ std::vector<std::shared_ptr<HISTORYITEM>> const& items);
+        void SetHistoryItems(_In_ CALCULATOR_MODE eMode, _In_ std::vector<std::shared_ptr<HISTORYITEM>> const& items);
         void SetInHistoryItemLoadMode(_In_ bool isHistoryItemLoadMode);
     };
 }

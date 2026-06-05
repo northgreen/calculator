@@ -149,6 +149,12 @@ public:
         delete[] numbers;
     }
 
+    virtual void InputChanged() override
+    {
+        DBGPRINT("Native:InputChanged()\n");
+        _params.InputChanged(_params.CalculatorState);
+    }
+
     virtual void MemoryItemChanged(unsigned int indexOfMemory) override
     {
         DBGPRINT("Native:MemoryItemChanged(%d)\n", indexOfMemory);
@@ -364,9 +370,9 @@ void CalculatorManager_SetMemorizedNumbersString(void* manager)
     AsManager(manager)->SetMemorizedNumbersString();
 }
 
-const wchar_t* CalculatorManager_GetResultForRadix(void* manager, int radix, int precision)
+const wchar_t* CalculatorManager_GetResultForRadix(void* manager, int radix, int precision, bool groupDigitsPerRadix)
 {
-    auto res = AsManager(manager)->GetResultForRadix(radix, precision);
+    auto res = AsManager(manager)->GetResultForRadix(radix, precision, groupDigitsPerRadix);
 
     auto out = new wchar_t[res.size() + 1]{};
     res.copy(out, res.size(), 0);
@@ -509,4 +515,33 @@ bool COpndCommand_IsNegative(void* pExpressionCommand)
 int CBinaryCommand_GetCommand(void* pExpressionCommand)
 {
     return (int)AsCBinaryCommand(pExpressionCommand)->GetCommand();
+}
+
+struct GetExpressionCommandsResult
+{
+    int32_t CommandCount;
+    void** Commands;
+};
+
+bool CalculatorManager_IsInputEmpty(void* manager)
+{
+    return AsManager(manager)->IsInputEmpty();
+}
+
+void* CalculatorManager_GetDisplayCommandsSnapshot(void* manager)
+{
+    auto commands = AsManager(manager)->GetDisplayCommandsSnapshot();
+
+    auto pRes = (GetExpressionCommandsResult*)malloc(sizeof(GetExpressionCommandsResult));
+    pRes->CommandCount = (int32_t)commands.size();
+
+    auto pCommands = (void**)malloc(commands.size() * sizeof(void*));
+
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+        pCommands[i] = commands[i].get();
+    }
+
+    pRes->Commands = pCommands;
+    return pRes;
 }

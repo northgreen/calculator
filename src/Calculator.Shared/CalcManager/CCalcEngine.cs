@@ -10,5 +10,6 @@ namespace CalculationManager
     {
         public static string OpCodeToUnaryString(int nOpCode, bool fInv, ANGLE_TYPE angletype) => throw new NotImplementedException();
         public static string OpCodeToString(int nOpCode) => throw new NotImplementedException();
+        public static string OpCodeToBinaryString(int nOpCode, bool isIntegerMode) => throw new NotImplementedException();
     }
 }

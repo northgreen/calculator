@@ -19,6 +19,7 @@ typedef void (*BinaryOperatorReceivedFunc)(void* state);
 typedef void (*OnHistoryItemAddedFunc)(void* state, unsigned int addedItemIndex);
 typedef void (*SetMemorizedNumbersFunc)(void* state, unsigned int count, const wchar_t** memorizedNumbers);
 typedef void (*MemoryItemChangedFunc)(void* state, unsigned int indexOfMemory);
+typedef void (*InputChangedFunc)(void* state);
 
 typedef const wchar_t* (*GetCEngineStringFunc)(void* state, const wchar_t* id);
 
@@ -36,6 +37,7 @@ struct CalculatorManager_CreateParams
     OnHistoryItemAddedFunc OnHistoryItemAdded;
     SetMemorizedNumbersFunc SetMemorizedNumbers;
     MemoryItemChangedFunc MemoryItemChanged;
+    InputChangedFunc InputChanged;
 
     void* ResourceState;
     GetCEngineStringFunc GetCEngineString;
@@ -98,7 +100,7 @@ extern "C"
     DLL_EXPORT void CalculatorManager_MemorizedNumberClearAll(void* manager);
     DLL_EXPORT bool CalculatorManager_IsEngineRecording(void* manager);
     DLL_EXPORT void CalculatorManager_SetMemorizedNumbersString(void* manager);
-    DLL_EXPORT const wchar_t* CalculatorManager_GetResultForRadix(void* manager, int radix, int precision);
+    DLL_EXPORT const wchar_t* CalculatorManager_GetResultForRadix(void* manager, int radix, int precision, bool groupDigitsPerRadix);
     DLL_EXPORT void CalculatorManager_SetPrecision(void* manager, int precision);
     DLL_EXPORT void CalculatorManager_UpdateMaxIntDigits(void* manager);
     DLL_EXPORT const wchar_t* CalculatorManager_DecimalSeparator(void* manager);
@@ -110,6 +112,9 @@ extern "C"
     DLL_EXPORT void* CalculatorManager_GetHistoryItemsWithMode(void* manager, int mode);
     DLL_EXPORT void* CalculatorManager_GetHistoryItems(void* manager);
     DLL_EXPORT void* CalculatorManager_GetHistoryItem(void* manager, int index);
+
+    DLL_EXPORT bool CalculatorManager_IsInputEmpty(void* manager);
+    DLL_EXPORT void* CalculatorManager_GetDisplayCommandsSnapshot(void* manager);
 
     DLL_EXPORT void Free(void* ptr);
     DLL_EXPORT int32_t GetWChar_t_Size();

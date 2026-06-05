@@ -60,6 +60,7 @@ namespace CalculationManager
         void OnHistoryItemAdded( int  addedItemIndex);
         void SetMemorizedNumbers(List<string> memorizedNumbers);
         void MemoryItemChanged(int  indexOfMemory);
+        void InputChanged();
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -77,6 +78,7 @@ namespace CalculationManager
         public IntPtr OnHistoryItemAdded;
         public IntPtr SetMemorizedNumbers;
         public IntPtr MemoryItemChanged;
+        public IntPtr InputChanged;
 
         public IntPtr ResourceState;
 
@@ -98,6 +100,7 @@ namespace CalculationManager
         public void MaxDigitsReached() => throw new NotImplementedException();
         public void BinaryOperatorReceived() => throw new NotImplementedException();
         public void MemoryItemChanged(int indexOfMemory) => throw new NotImplementedException();
+        public void InputChanged() => throw new NotImplementedException();
 
         public CalculatorManager(ref CalculatorDisplay displayCallback, ref EngineResourceProvider resourceProvider)
         {
@@ -126,6 +129,7 @@ namespace CalculationManager
 				OnNoRightParenAdded = ptrs[8],
 				SetExpressionDisplay = ptrs[9],
 				SetMemorizedNumbers = ptrs[10],
+				InputChanged = ptrs[11],
 			};	
 
 #else
@@ -145,6 +149,7 @@ namespace CalculationManager
                 OnNoRightParenAdded = Marshal.GetFunctionPointerForDelegate(NativeDispatch._onNoRightParenAddedCallback),
                 SetExpressionDisplay = Marshal.GetFunctionPointerForDelegate(NativeDispatch._setExpressionDisplayCallback),
                 SetMemorizedNumbers = Marshal.GetFunctionPointerForDelegate(NativeDispatch._setMemorizedNumbersCallback),
+                InputChanged = Marshal.GetFunctionPointerForDelegate(NativeDispatch._inputChangedCallback),
             };
 
 #endif
@@ -198,6 +203,9 @@ namespace CalculationManager
 		public bool IsEngineRecording()
 			=> NativeDispatch.CalculatorManager_IsEngineRecording(_nativeManager);
 
+		public bool IsInputEmpty()
+			=> NativeDispatch.CalculatorManager_IsInputEmpty(_nativeManager);
+
 		public List<char> GetSavedCommands()
 			=> throw new NotImplementedException();
 
@@ -207,8 +215,8 @@ namespace CalculationManager
 		public void SetMemorizedNumbersString()
 			=> NativeDispatch.CalculatorManager_SetMemorizedNumbersString(_nativeManager);
 
-		public string GetResultForRadix(int radix, int precision)
-			=> NativeDispatch.CalculatorManager_GetResultForRadix(_nativeManager, radix, precision);
+		public string GetResultForRadix(int radix, int precision, bool groupDigitsPerRadix)
+			=> NativeDispatch.CalculatorManager_GetResultForRadix(_nativeManager, radix, precision, groupDigitsPerRadix);
 
 		public void SetPrecision(int precision)
 			=> NativeDispatch.CalculatorManager_SetPrecision(_nativeManager, precision);
@@ -323,5 +331,36 @@ namespace CalculationManager
 
 		public void SetInHistoryItemLoadMode(bool isHistoryItemLoadMode)
 			=> NativeDispatch.CalculatorManager_SetInHistoryItemLoadMode(_nativeManager, isHistoryItemLoadMode);
+
+		public List<IExpressionCommand> GetDisplayCommandsSnapshot()
+		{
+			var pResult = NativeDispatch.CalculatorManager_GetDisplayCommandsSnapshot(_nativeManager);
+			// 复用现有的 Unmarshal 逻辑
+			var result = Marshal.PtrToStructure<GetExpressionCommandsResult>(pResult);
+			var commands = new List<IExpressionCommand>();
+			for (int j = 0; j < result.CommandCount; j++)
+			{
+				var pExpressionCommand = Marshal.ReadIntPtr(result.Commands, j * Marshal.SizeOf<IntPtr>());
+				var commandType = NativeDispatch.IExpressionCommand_GetCommandType(pExpressionCommand);
+				switch (commandType)
+				{
+					case CommandType.BinaryCommand:
+						commands.Add(new CBinaryCommand(pExpressionCommand));
+						break;
+					case CommandType.OperandCommand:
+						commands.Add(new COpndCommand(pExpressionCommand));
+						break;
+					case CommandType.Parentheses:
+						commands.Add(new CParentheses(pExpressionCommand));
+						break;
+					case CommandType.UnaryCommand:
+						commands.Add(new CUnaryCommand(pExpressionCommand));
+						break;
+					default:
+						throw new NotSupportedException($"CommandType.{commandType} is not supported");
+				}
+			}
+			return commands;
+		}
 	}
 }

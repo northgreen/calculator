@@ -139,5 +139,16 @@ namespace CalculatorApp
                 }
             }
         }
+
+        public void InputChanged()
+        {
+            if (m_callbackReference != null)
+            {
+                if (m_callbackReference.Target is ViewModel.StandardCalculatorViewModel calcVM)
+                {
+                    calcVM.OnInputChanged();
+                }
+            }
+        }
     }
 }

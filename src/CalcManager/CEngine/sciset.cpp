@@ -24,7 +24,7 @@ void CCalcEngine::SetRadixTypeAndNumWidth(RADIX_TYPE radixtype, NUM_WIDTH numwid
         if (fMsb)
         {
             // If high bit is set, then get the decimal number in -ve 2'scompl form.
-            auto tempResult = m_currentVal ^ m_chopNumbers[m_numwidth];
+            auto tempResult = m_currentVal ^ m_chopNumbers[static_cast<size_t>(m_numwidth)];
 
             m_currentVal = -(tempResult + 1);
         }
@@ -36,10 +36,10 @@ void CCalcEngine::SetRadixTypeAndNumWidth(RADIX_TYPE radixtype, NUM_WIDTH numwid
         // radixtype is not even saved
     }
 
-    if (numwidth >= QWORD_WIDTH && numwidth <= BYTE_WIDTH)
+    if (static_cast<int>(numwidth) >= static_cast<int>(NUM_WIDTH::QWORD_WIDTH) && static_cast<int>(numwidth) <= static_cast<int>(NUM_WIDTH::BYTE_WIDTH))
     {
         m_numwidth = numwidth;
-        m_dwWordBitWidth = DwWordBitWidthFromeNumWidth(numwidth);
+        m_dwWordBitWidth = DwWordBitWidthFromNumWidth(numwidth);
     }
 
     // inform ratpak that a change in base or precision has occurred
@@ -50,14 +50,14 @@ void CCalcEngine::SetRadixTypeAndNumWidth(RADIX_TYPE radixtype, NUM_WIDTH numwid
     DisplayNum();
 }
 
-int32_t CCalcEngine::DwWordBitWidthFromeNumWidth(NUM_WIDTH /*numwidth*/)
+int32_t CCalcEngine::DwWordBitWidthFromNumWidth(NUM_WIDTH /*numwidth*/)
 {
     static constexpr int nBitMax[] = { 64, 32, 16, 8 };
     int32_t wmax = nBitMax[0];
 
-    if (m_numwidth >= 0 && (size_t)m_numwidth < size(nBitMax))
+    if (static_cast<int>(m_numwidth) >= 0 && static_cast<size_t>(m_numwidth) < size(nBitMax))
     {
-        wmax = nBitMax[m_numwidth];
+        wmax = nBitMax[static_cast<size_t>(m_numwidth)];
     }
     return wmax;
 }
@@ -78,7 +78,7 @@ uint32_t CCalcEngine::NRadixFromRadixType(RADIX_TYPE radixtype)
 //  Toggles a given bit into the number representation. returns true if it changed it actually.
 bool CCalcEngine::TryToggleBit(CalcEngine::Rational& rat, uint32_t wbitno)
 {
-    uint32_t wmax = DwWordBitWidthFromeNumWidth(m_numwidth);
+    uint32_t wmax = DwWordBitWidthFromNumWidth(m_numwidth);
     if (wbitno >= wmax)
     {
         return false; // ignore error cant happen
@@ -141,7 +141,7 @@ void CCalcEngine::UpdateMaxIntDigits()
         // if in integer mode you still have to honor the max digits you can enter based on bit width
         if (m_fIntegerMode)
         {
-            m_cIntDigitsSav = static_cast<int>(m_maxDecimalValueStrings[m_numwidth].length()) - 1;
+            m_cIntDigitsSav = static_cast<int>(m_maxDecimalValueStrings[static_cast<size_t>(m_numwidth)].length()) - 1;
             // This is the max digits you can enter a decimal in fixed width mode aka integer mode -1. The last digit
             // has to be checked separately
         }

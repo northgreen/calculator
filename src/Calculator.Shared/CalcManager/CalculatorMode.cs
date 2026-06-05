@@ -8,5 +8,6 @@ namespace CalculationManager
     {
         CM_STD = 0,
         CM_SCI,
+        CM_PROG,
     };
 }

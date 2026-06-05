@@ -42,7 +42,7 @@ CalcEngine::Rational CCalcEngine::SciCalcFunctions(CalcEngine::Rational const& r
             }
             else
             {
-                result = rat ^ m_chopNumbers[m_numwidth];
+                result = rat ^ m_chopNumbers[static_cast<size_t>(m_numwidth)];
             }
             break;
 

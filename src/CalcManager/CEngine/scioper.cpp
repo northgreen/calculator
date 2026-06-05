@@ -45,10 +45,10 @@ CalcEngine::Rational CCalcEngine::DoOperation(int operation, CalcEngine::Rationa
             {
                 result = Integer(result);
 
-                auto tempRat = m_chopNumbers[m_numwidth] >> holdVal;
+                auto tempRat = m_chopNumbers[static_cast<size_t>(m_numwidth)] >> holdVal;
                 tempRat = Integer(tempRat);
 
-                result |= tempRat ^ m_chopNumbers[m_numwidth];
+                result |= tempRat ^ m_chopNumbers[static_cast<size_t>(m_numwidth)];
             }
             break;
         }
@@ -88,7 +88,7 @@ CalcEngine::Rational CCalcEngine::DoOperation(int operation, CalcEngine::Rationa
 
                 if (fMsb)
                 {
-                    result = (rhs ^ m_chopNumbers[m_numwidth]) + 1;
+                    result = (rhs ^ m_chopNumbers[static_cast<size_t>(m_numwidth)]) + 1;
 
                     iNumeratorSign = -1;
                 }
@@ -98,7 +98,7 @@ CalcEngine::Rational CCalcEngine::DoOperation(int operation, CalcEngine::Rationa
 
                 if (fMsb)
                 {
-                    temp = (temp ^ m_chopNumbers[m_numwidth]) + 1;
+                    temp = (temp ^ m_chopNumbers[static_cast<size_t>(m_numwidth)]) + 1;
 
                     iDenominatorSign = -1;
                 }

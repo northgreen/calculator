@@ -24,17 +24,16 @@ static constexpr wstring_view DEFAULT_NUMBER_STR = L"0";
 // Read strings for keys, errors, trig types, etc.
 // These will be copied from the resources to local memory.
 
-unordered_map<wstring, wstring> CCalcEngine::s_engineStrings;
+unordered_map<wstring_view, wstring> CCalcEngine::s_engineStrings;
 
 void CCalcEngine::LoadEngineStrings(CalculationManager::IResourceProvider& resourceProvider)
 {
     for (const auto& sid : g_sids)
     {
-        auto locKey = wstring{ sid };
-        auto locString = resourceProvider.GetCEngineString(locKey);
+        auto locString = resourceProvider.GetCEngineString(std::wstring{sid});
         if (!locString.empty())
         {
-            s_engineStrings[locKey] = locString;
+            s_engineStrings[sid] = locString;
         }
     }
 }
@@ -96,13 +95,13 @@ CCalcEngine::CCalcEngine(
     , m_precedenceOpCount(0)
     , m_nLastCom(0)
     , m_angletype(ANGLE_DEG)
-    , m_numwidth(QWORD_WIDTH)
+    , m_numwidth(NUM_WIDTH::QWORD_WIDTH)
     , m_HistoryCollector(pCalcDisplay, pHistoryDisplay, DEFAULT_DEC_SEPARATOR)
     , m_groupSeparator(DEFAULT_GRP_SEPARATOR)
 {
     InitChopNumbers();
 
-    m_dwWordBitWidth = DwWordBitWidthFromeNumWidth(m_numwidth);
+    m_dwWordBitWidth = DwWordBitWidthFromNumWidth(m_numwidth);
 
     m_maxTrigonometricNum = RationalMath::Pow(10, 100);
 
@@ -131,6 +130,16 @@ void CCalcEngine::InitChopNumbers()
 
         m_maxDecimalValueStrings[i] = maxVal.ToString(10, FMT_FLOAT, m_precision);
     }
+}
+
+CalcEngine::Rational CCalcEngine::GetChopNumber() const
+{
+    return m_chopNumbers[static_cast<int>(m_numwidth)];
+}
+
+std::wstring CCalcEngine::GetMaxDecimalValueString() const
+{
+    return m_maxDecimalValueStrings[static_cast<int>(m_numwidth)];
 }
 
 // Gets the number in memory for UI to keep it persisted and set it again to a different instance
@@ -192,4 +201,14 @@ void CCalcEngine::SettingsChanged()
 wchar_t CCalcEngine::DecimalSeparator() const
 {
     return m_decimalSeparator;
+}
+
+std::vector<std::shared_ptr<IExpressionCommand>> CCalcEngine::GetHistoryCollectorCommandsSnapshot() const
+{
+    auto commands = m_HistoryCollector.GetCommands();
+    if (!m_HistoryCollector.FOpndAddedToHistory() && m_bRecord)
+    {
+        commands.push_back(m_HistoryCollector.GetOperandCommandForSnapshot(m_numberString, m_currentVal));
+    }
+    return commands;
 }

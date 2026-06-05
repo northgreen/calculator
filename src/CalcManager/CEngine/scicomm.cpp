@@ -155,7 +155,7 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
             return;
         }
 
-        if (!m_input.TryAddDigit(iValue, m_radix, m_fIntegerMode, m_maxDecimalValueStrings[m_numwidth], m_dwWordBitWidth, m_cIntDigitsSav))
+        if (!m_input.TryAddDigit(iValue, m_radix, m_fIntegerMode, m_maxDecimalValueStrings[static_cast<size_t>(m_numwidth)], m_dwWordBitWidth, m_cIntDigitsSav))
         {
             HandleErrorCommand(wParam);
             HandleMaxDigitsReached();
@@ -632,7 +632,7 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
     {
         if (m_bRecord)
         {
-            if (m_input.TryToggleSign(m_fIntegerMode, m_maxDecimalValueStrings[m_numwidth]))
+            if (m_input.TryToggleSign(m_fIntegerMode, m_maxDecimalValueStrings[static_cast<size_t>(m_numwidth)]))
             {
                 DisplayNum();
             }
@@ -945,12 +945,12 @@ bool CCalcEngine::IsCurrentTooBigForTrig()
     return m_currentVal >= m_maxTrigonometricNum;
 }
 
-int CCalcEngine::GetCurrentRadix()
+uint32_t CCalcEngine::GetCurrentRadix()
 {
     return m_radix;
 }
 
-wstring CCalcEngine::GetCurrentResultForRadix(uint32_t radix, int32_t precision)
+wstring CCalcEngine::GetCurrentResultForRadix(uint32_t radix, int32_t precision, bool groupDigitsPerRadix)
 {
     Rational rat = (m_bRecord ? m_input.ToRational(m_radix, m_precision) : m_currentVal);
 
@@ -963,7 +963,11 @@ wstring CCalcEngine::GetCurrentResultForRadix(uint32_t radix, int32_t precision)
         ChangeConstants(m_radix, m_precision);
     }
 
-    return GroupDigitsPerRadix(numberString, radix);
+    if (groupDigitsPerRadix)
+    {
+        return GroupDigitsPerRadix(numberString, radix);
+    }
+    return numberString;
 }
 
 wstring CCalcEngine::GetStringForDisplay(Rational const& rat, uint32_t radix)
@@ -987,7 +991,7 @@ wstring CCalcEngine::GetStringForDisplay(Rational const& rat, uint32_t radix)
             if ((radix == 10) && fMsb)
             {
                 // If high bit is set, then get the decimal number in negative 2's complement form.
-                tempRat = -((tempRat ^ m_chopNumbers[m_numwidth]) + 1);
+                tempRat = -((tempRat ^ m_chopNumbers[static_cast<size_t>(m_numwidth)]) + 1);
             }
 
             result = tempRat.ToString(radix, m_nFE, m_precision);

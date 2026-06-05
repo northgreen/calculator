@@ -247,6 +247,11 @@ void CalcInput::Backspace()
     }
 }
 
+bool CalcInput::IsEmpty()
+{
+    return m_base.IsEmpty() && m_exponent.IsEmpty();
+}
+
 void CalcInput::SetDecimalSymbol(wchar_t decSymbol)
 {
     if (m_decSymbol != decSymbol)

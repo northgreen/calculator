@@ -84,6 +84,11 @@ namespace CalculationManager
         m_displayCallback->MemoryItemChanged(indexOfMemory);
     }
 
+    void CalculatorManager::InputChanged()
+    {
+        m_displayCallback->InputChanged();
+    }
+
     /// <summary>
     /// Call the callback function using passed in IDisplayHelper.
     /// Used to set the expression display value on ViewModel
@@ -670,14 +675,19 @@ namespace CalculationManager
         m_savedCommands.push_back(static_cast<unsigned char>(indexOfMemory));
     }
 
-    vector<shared_ptr<HISTORYITEM>> const& CalculatorManager::GetHistoryItems()
+    vector<shared_ptr<HISTORYITEM>> const& CalculatorManager::GetHistoryItems() const
     {
         return m_pHistory->GetHistory();
     }
 
-    vector<shared_ptr<HISTORYITEM>> const& CalculatorManager::GetHistoryItems(_In_ CALCULATOR_MODE mode)
+    vector<shared_ptr<HISTORYITEM>> const& CalculatorManager::GetHistoryItems(_In_ CALCULATOR_MODE mode) const
     {
         return (mode == CM_STD) ? m_pStdHistory->GetHistory() : m_pSciHistory->GetHistory();
+    }
+
+    vector<shared_ptr<HISTORYITEM>> const& CalculatorManager::GetHistoryItems(_In_ CalculatorMode mode) const
+    {
+        return (mode == CalculatorMode::StandardMode) ? m_pStdHistory->GetHistory() : m_pSciHistory->GetHistory();
     }
 
     shared_ptr<HISTORYITEM> const& CalculatorManager::GetHistoryItem(_In_ unsigned int uIdx)
@@ -771,9 +781,18 @@ namespace CalculationManager
         }
     }
 
-    wstring CalculatorManager::GetResultForRadix(uint32_t radix, int32_t precision)
+    void CalculatorManager::SetHistoryItems(_In_ std::vector<std::shared_ptr<HISTORYITEM>> const& historyItems)
     {
-        return m_currentCalculatorEngine ? m_currentCalculatorEngine->GetCurrentResultForRadix(radix, precision) : L"";
+        for (auto const& historyItem : historyItems)
+        {
+            auto index = m_pHistory->AddItem(historyItem);
+            OnHistoryItemAdded(index);
+        }
+    }
+
+    wstring CalculatorManager::GetResultForRadix(uint32_t radix, int32_t precision, bool groupDigitsPerRadix)
+    {
+        return m_currentCalculatorEngine ? m_currentCalculatorEngine->GetCurrentResultForRadix(radix, precision, groupDigitsPerRadix) : L"";
     }
 
     void CalculatorManager::SetPrecision(int32_t precision)
@@ -796,9 +815,19 @@ namespace CalculationManager
         return m_currentCalculatorEngine->FInRecordingState() ? true : false;
     }
 
+    bool CalculatorManager::IsInputEmpty()
+    {
+        return m_currentCalculatorEngine->IsInputEmpty();
+    }
+
     void CalculatorManager::SetInHistoryItemLoadMode(_In_ bool isHistoryItemLoadMode)
     {
         m_inHistoryItemLoadMode = isHistoryItemLoadMode;
+    }
+
+    std::vector<std::shared_ptr<IExpressionCommand>> CalculatorManager::GetDisplayCommandsSnapshot() const
+    {
+        return m_currentCalculatorEngine->GetHistoryCollectorCommandsSnapshot();
     }
 
     /// <summary>

@@ -66,10 +66,10 @@ CalcEngine::Rational CCalcEngine::TruncateNumForIntMath(CalcEngine::Rational con
     {
         // if negative make positive by doing a twos complement
         result = -(result)-1;
-        result ^= m_chopNumbers[m_numwidth];
+        result ^= m_chopNumbers[static_cast<size_t>(m_numwidth)];
     }
 
-    result &= m_chopNumbers[m_numwidth];
+    result &= m_chopNumbers[static_cast<size_t>(m_numwidth)];
 
     return result;
 }

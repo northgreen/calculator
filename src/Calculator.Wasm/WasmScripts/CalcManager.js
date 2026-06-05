@@ -27,6 +27,7 @@
         var _onNoRightParenAddedCallback    = CalcManager._calculatorExports.CalculationManager.NativeDispatch.OnNoRightParenAddedCallback;
         var _setExpressionDisplayCallback   = CalcManager._calculatorExports.CalculationManager.NativeDispatch.SetExpressionDisplayCallback;
         var _setMemorizedNumbersCallback    = CalcManager._calculatorExports.CalculationManager.NativeDispatch.SetMemorizedNumbersCallback;
+        var _inputChangedCallback           = CalcManager._calculatorExports.CalculationManager.NativeDispatch.InputChangedCallback;
 
         var fGetCEngineStringCallback       = Module.addFunction((state, id) => _getCEngineStringCallback(state, id), 'iii');
 
@@ -40,6 +41,7 @@
         var fOnNoRightParenAddedCallback    = Module.addFunction((state) => _onNoRightParenAddedCallback(state), 'vi');
         var fSetExpressionDisplayCallback   = Module.addFunction((state, historyItem) => _setExpressionDisplayCallback(state, historyItem), 'vii');
         var fSetMemorizedNumbersCallback    = Module.addFunction((state, size, numbers) => _setMemorizedNumbersCallback(state, size, numbers), 'viii');
+        var fInputChangedCallback           = Module.addFunction((state) => _inputChangedCallback(state), 'vi');
 
         var ret = [
             fGetCEngineStringCallback
@@ -53,6 +55,7 @@
             , fOnNoRightParenAddedCallback
             , fSetExpressionDisplayCallback
             , fSetMemorizedNumbersCallback
+            , fInputChangedCallback
         ];
 
         return ret;

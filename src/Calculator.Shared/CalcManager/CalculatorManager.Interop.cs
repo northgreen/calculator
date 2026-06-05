@@ -66,7 +66,7 @@ namespace CalculationManager
 		public static extern void CalculatorManager_SetMemorizedNumbersString(IntPtr nativeManager);
 
 		[DllImport(DllPath, CharSet = CharSet.Unicode)]
-		public static extern string CalculatorManager_GetResultForRadix(IntPtr nativeManager, int radix, int precision);
+		public static extern string CalculatorManager_GetResultForRadix(IntPtr nativeManager, int radix, int precision, bool groupDigitsPerRadix);
 
 		[DllImport(DllPath)]
 		public static extern void CalculatorManager_SetPrecision(IntPtr nativeManager, int precision);
@@ -100,6 +100,12 @@ namespace CalculationManager
 
 		[DllImport(DllPath)]
 		public static extern IntPtr CalculatorManager_GetHistoryItem(IntPtr nativeManager, int uIdx);
+
+		[DllImport(DllPath)]
+		public static extern bool CalculatorManager_IsInputEmpty(IntPtr nativeManager);
+
+		[DllImport(DllPath)]
+		public static extern IntPtr CalculatorManager_GetDisplayCommandsSnapshot(IntPtr nativeManager);
 
 		[DllImport(DllPath)]
 		public static extern int CBinaryCommand_GetCommand(IntPtr m_pExpressionCommand);
@@ -140,6 +146,8 @@ namespace CalculationManager
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void MemoryItemChangedCallbackFunc(IntPtr state, int indexOfMemory);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate void InputChangedCallbackFunc(IntPtr state);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void OnHistoryItemAddedCallbackFunc(IntPtr state, int addedItemIndex);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void OnNoRightParenAddedCallbackFunc(IntPtr state);
@@ -156,6 +164,7 @@ namespace CalculationManager
 
 		public static MaxDigitsReachedCallbackFunc _maxDigitsReachedCallback = MaxDigitsReachedCallback;
 		public static MemoryItemChangedCallbackFunc _memoryItemChangedCallback = MemoryItemChangedCallback;
+		public static InputChangedCallbackFunc _inputChangedCallback = InputChangedCallback;
 		public static OnHistoryItemAddedCallbackFunc _onHistoryItemAddedCallback = OnHistoryItemAddedCallback;
 		public static OnNoRightParenAddedCallbackFunc _onNoRightParenAddedCallback = OnNoRightParenAddedCallback;
 		public static SetExpressionDisplayCallbackFunc _setExpressionDisplayCallback = SetExpressionDisplayCallback;
@@ -187,6 +196,20 @@ namespace CalculationManager
 			manager.MemoryItemChanged(indexOfMemory);
 
 			DebugTrace($"CalculatorManager.MemoryItemChangedCallback({indexOfMemory})");
+		}
+
+#if __IOS__ || __MACOS__
+		[ObjCRuntime.MonoPInvokeCallback(typeof(InputChangedCallbackFunc))]
+#endif
+#if __WASM__
+		[JSExport]
+#endif
+		public static void InputChangedCallback(IntPtr state)
+		{
+			var manager = GCHandle.FromIntPtr((IntPtr)state).Target as CalculatorDisplay;
+			manager.InputChanged();
+
+			DebugTrace($"CalculatorManager.InputChangedCallback");
 		}
 
 #if __IOS__ || __MACOS__
@@ -426,6 +449,13 @@ namespace CalculationManager
 
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CUnaryCommand_GetCommandsResult
+	{
+		public int CommandCount;
+		public IntPtr Commands;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct GetExpressionCommandsResult
 	{
 		public int CommandCount;
 		public IntPtr Commands;

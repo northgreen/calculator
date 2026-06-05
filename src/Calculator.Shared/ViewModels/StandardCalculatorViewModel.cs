@@ -1569,6 +1569,20 @@ namespace CalculatorApp.ViewModel
             }
         }
 
+        public void OnInputChanged()
+        {
+            // When input becomes empty, ensure display shows "0"
+            if (m_standardCalculatorManager.IsInputEmpty())
+            {
+                DisplayValue = "0";
+                return;
+            }
+
+            // The actual expression display update is handled by SetExpressionDisplay callback.
+            // This callback serves as a notification that input state has changed.
+            // Additional handling can be added here as needed.
+        }
+
         public void OnMemoryItemPressed(object memoryItemPosition)
         {
             if (MemorizedNumbers != null && MemorizedNumbers.Count > 0)

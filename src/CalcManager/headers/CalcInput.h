@@ -65,6 +65,7 @@ namespace CalcEngine
         bool HasDecimalPt();
         bool TryBeginExponent();
         void Backspace();
+        bool IsEmpty();
         void SetDecimalSymbol(wchar_t decSymbol);
         std::wstring ToString(uint32_t radix);
         Rational ToRational(uint32_t radix, int32_t precision);

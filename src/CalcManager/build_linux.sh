@@ -7,7 +7,7 @@ buildManager() {
 	echo "Building CalcManager for $2 - $CALCMANAGER_PATH"
 
 	$1 \
-		-std=c++1z \
+		-std=c++20 \
 		-D__LINUX__=1 \
 		-fPIC \
 		-shared \
