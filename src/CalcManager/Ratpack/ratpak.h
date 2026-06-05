@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <string>
+#include <cstdint>
 #include "CalcErr.h"
 #include <cstring> // for memmove
 // #include <sal.h>   // for SAL
