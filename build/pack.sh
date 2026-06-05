@@ -132,14 +132,14 @@ build_calcmanager() {
     local arch="${1:-x64}"
     echo "=== 构建 CalcManager for $arch ==="
     
-    local build_script="src/CalcManager/build_linux.sh"
-    if [[ ! -f "$build_script" ]]; then
-        echo "ERROR: Build script not found: $build_script"
+    local calcmanager_dir="src/CalcManager"
+    if [[ ! -d "$calcmanager_dir" ]]; then
+        echo "ERROR: CalcManager directory not found: $calcmanager_dir"
         exit 1
     fi
     
-    # 调用构建脚本，捕获输出和退出码
-    if bash "$build_script"; then
+    # 使用子 shell 执行构建脚本，确保在正确的目录运行
+    if (cd "$calcmanager_dir" && bash build_linux.sh); then
         echo "✓ CalcManager for $arch 构建成功"
     else
         local exit_code=$?
