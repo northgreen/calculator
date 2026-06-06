@@ -64,6 +64,8 @@ Security issues and bugs should be reported through the [GitHub security tab](ht
 - g++ (C++20)
 - snapcraft (可选，用于构建 Snap 包)
 - aarch64-linux-gnu-g++ (可选，用于 ARM64 交叉编译)
+- Android NDK r26+ (可选，用于构建 Android APK)
+- JDK 17+ (可选，用于 Android 构建)
 
 ### 用法
 
@@ -82,6 +84,12 @@ Security issues and bugs should be reported through the [GitHub security tab](ht
 
 # 查看帮助
 ./build/pack.sh --help
+
+# 构建 Android arm64 APK
+./build/pack.sh --platform android-arm64
+
+# 构建 Android 全部 ABI APK
+./build/pack.sh --platform android
 ```
 
 ### 输出产物
@@ -94,12 +102,17 @@ Security issues and bugs should be reported through the [GitHub security tab](ht
 | Linux x64   | Snap | `dist/uno-calculator_*.snap`      |
 | Linux ARM64 | zip  | `dist/Calculator-linux-arm64.zip` |
 | Linux ARM64 | Snap | `dist/uno-calculator_*.snap`      |
+| Android arm64-v8a | APK | `src/Calculator.Mobile/bin/` |
+| Android armeabi-v7a | APK | `src/Calculator.Mobile/bin/` |
+| Android x86_64 | APK | `src/Calculator.Mobile/bin/` |
+| Android x86 | APK | `src/Calculator.Mobile/bin/` |
 
 ### CI/CD
 
 本项目使用 GitHub Actions 进行自动化构建：
 
 - **Push/PR**: 自动触发 x64 zip/Snap 和 ARM64 zip 构建
+- **Android**: 触发 arm64 Debug 构建和全部 ABI Release 构建（需配置签名 Secrets）
 - **手动触发**: 可通过 GitHub Actions 页面手动触发构建
 - **产物**: 构建产物保留 30 天
 

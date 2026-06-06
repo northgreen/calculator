@@ -32,7 +32,7 @@ parse_args() {
         case "$1" in
             --platform)
                 if [[ -z "${2:-}" ]]; then
-                    echo "ERROR: --platform requires a value (linux-x64, linux-arm64)"
+                    echo "ERROR: --platform requires a value (linux-x64, linux-arm64, android, android-arm64, android-x86, android-x86_64)"
                     exit 1
                 fi
                 TARGET_PLATFORM="$2"
@@ -54,7 +54,7 @@ parse_args() {
                 echo "用法: $0 [选项]"
                 echo ""
                 echo "选项:"
-                echo "  --platform <platform>  目标平台 (linux-x64, linux-arm64, all)"
+                echo "  --platform <platform>  目标平台 (linux-x64, linux-arm64, android, android-arm64, android-x86, android-x86_64, all)"
                 echo "  --format <format>      输出格式 (zip, snap, all)"
                 echo "  --check                仅检查先决条件"
                 echo "  --help, -h             显示帮助信息"
@@ -125,6 +125,64 @@ check_arm64_prerequisites() {
     echo "✓ aarch64-linux-gnu-g++: $arm_gpp_version"
 }
 
+# Android 构建先决条件
+check_android_prerequisites() {
+    echo "=== 检查 Android 构建先决条件 ==="
+    
+    # 检测 NDK 路径
+    local ndk=""
+    if [[ -n "${ANDROID_NDK_HOME:-}" && -d "$ANDROID_NDK_HOME" ]]; then
+        ndk="$ANDROID_NDK_HOME"
+    elif [[ -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME/ndk/latest" ]]; then
+        ndk="$ANDROID_HOME/ndk/latest"
+    elif [[ -n "${ANDROID_SDK_ROOT:-}" && -d "$ANDROID_SDK_ROOT/ndk/latest" ]]; then
+        ndk="$ANDROID_SDK_ROOT/ndk/latest"
+    elif [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
+        latest_ndk=$(ls -1d "$ANDROID_SDK_ROOT/ndk/"* 2>/dev/null | sort -V | tail -n1 || true)
+        if [[ -n "$latest_ndk" ]]; then
+            ndk="$latest_ndk"
+        fi
+    fi
+    
+    if [[ -z "$ndk" ]]; then
+        echo "ERROR: Android NDK not found."
+        echo "  Set ANDROID_NDK_HOME, ANDROID_HOME, or ANDROID_SDK_ROOT."
+        exit 1
+    fi
+    
+    # 检查 NDK 版本 >= r26
+    local props_file="$ndk/source.properties"
+    if [[ ! -f "$props_file" ]]; then
+        echo "ERROR: Cannot find source.properties at $ndk"
+        exit 1
+    fi
+    
+    local ndk_version
+    ndk_version=$(grep -E '^Pkg\.Revision\s*=' "$props_file" | head -n1 | sed 's/.*=\s*//' | tr -d '[:space:]')
+    if [[ -z "$ndk_version" ]]; then
+        echo "ERROR: Cannot parse NDK version"
+        exit 1
+    fi
+    
+    local major="${ndk_version%%.*}"
+    if [[ "$major" -lt 26 ]]; then
+        echo "ERROR: NDK r26+ required (found r$ndk_version)"
+        exit 1
+    fi
+    
+    echo "✓ NDK: r$ndk_version at $ndk"
+    
+    # 检查 JDK 17+
+    if ! command -v java &> /dev/null; then
+        echo "ERROR: Java not found. Install JDK 17+."
+        exit 1
+    fi
+    
+    local java_version
+    java_version=$(java -version 2>&1 | head -n1 || echo "unknown")
+    echo "✓ Java: $java_version"
+}
+
 # ============================================================
 # 构建 C++ 引擎
 # ============================================================
@@ -148,6 +206,26 @@ build_calcmanager() {
     fi
 }
 
+# 构建 Android C++ 引擎
+build_android_calcmanager() {
+    local abi="$1"
+    echo "=== 构建 CalcManager for Android $abi ==="
+    
+    local calcmanager_dir="src/CalcManager"
+    if [[ ! -d "$calcmanager_dir" ]]; then
+        echo "ERROR: CalcManager directory not found: $calcmanager_dir"
+        exit 1
+    fi
+    
+    if (cd "$calcmanager_dir" && bash build_android.sh "$abi"); then
+        echo "✓ CalcManager for Android $abi 构建成功"
+    else
+        local exit_code=$?
+        echo "ERROR: CalcManager for Android $abi build failed with exit code $exit_code"
+        exit $exit_code
+    fi
+}
+
 # ============================================================
 # .NET 自包含发布
 # ============================================================
@@ -162,6 +240,31 @@ build_dotnet() {
         -o "dist/Calculator-$runtime/publish"
 
     echo "✓ .NET publish for $runtime complete"
+}
+
+# Android .NET 发布
+build_android_dotnet() {
+    local abi="$1"
+    local config="${2:-Release}"
+    echo "=== Android .NET 发布 for $abi ($config) ==="
+    
+    # 映射 NDK ABI 名称到 .NET RID
+    local rid
+    case "$abi" in
+        armeabi-v7a) rid="android-arm" ;;
+        arm64-v8a)   rid="android-arm64" ;;
+        x86)         rid="android-x86" ;;
+        x86_64)      rid="android-x64" ;;
+        *)           echo "ERROR: Unknown ABI: $abi"; exit 1 ;;
+    esac
+    
+    dotnet publish src/Calculator.Mobile/Calculator.Mobile.csproj \
+        -f net9.0-android \
+        -r "$rid" \
+        -c "$config" \
+        -o "dist/Calculator-android-${abi}"
+    
+    echo "✓ Android .NET publish for $abi complete"
 }
 
 # ============================================================
@@ -288,15 +391,20 @@ main() {
     # 1. 检查基础先决条件
     check_prerequisites
 
+    # 2. 根据平台检查 ARM64 交叉编译先决条件
+    if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
+        check_arm64_prerequisites
+    fi
+
+    # 检查 Android 构建先决条件
+    if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == android* ]]; then
+        check_android_prerequisites
+    fi
+
     if [[ "$CHECK_ONLY" == true ]]; then
         echo ""
         echo "=== 先决条件检查完成 ==="
         exit 0
-    fi
-
-    # 2. 根据平台检查 ARM64 交叉编译先决条件
-    if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
-        check_arm64_prerequisites
     fi
 
     # 创建输出目录
@@ -314,6 +422,25 @@ main() {
         build_calcmanager "arm64"
     fi
 
+    # Android C++ 编译
+    if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == android* ]]; then
+        if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "android" ]]; then
+            # 构建全部 4 个 ABI
+            build_android_calcmanager "all"
+        else
+            # 构建特定 ABI（如 android-arm64）
+            local android_abi="${TARGET_PLATFORM#android-}"
+            # 映射平台名称到 ABI 名称
+            case "$android_abi" in
+                arm64)  android_abi="arm64-v8a" ;;
+                x86)    android_abi="x86" ;;
+                x86_64) android_abi="x86_64" ;;
+                arm)    android_abi="armeabi-v7a" ;;
+            esac
+            build_android_calcmanager "$android_abi"
+        fi
+    fi
+
     # 4. .NET 自包含发布
     echo ""
     echo "=== 阶段 2: .NET 自包含发布 ==="
@@ -324,6 +451,24 @@ main() {
 
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
         build_dotnet "linux-arm64"
+    fi
+
+    # Android .NET 发布
+    if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == android* ]]; then
+        if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "android" ]]; then
+            for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+                build_android_dotnet "$abi" "Release"
+            done
+        else
+            local android_abi="${TARGET_PLATFORM#android-}"
+            case "$android_abi" in
+                arm64)  android_abi="arm64-v8a" ;;
+                x86)    android_abi="x86" ;;
+                x86_64) android_abi="x86_64" ;;
+                arm)    android_abi="armeabi-v7a" ;;
+            esac
+            build_android_dotnet "$android_abi" "Release"
+        fi
     fi
 
     # 5. 写入 VERSION 文件
