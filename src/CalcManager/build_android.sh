@@ -120,7 +120,8 @@ build_abi() {
         -std=c++20 \
         -fPIC \
         -shared \
-        -stdlib=libc++_static \
+        -static-libstdc++ \
+        -Wl,-Bstatic -lc++_static -lc++abi -Wl,-Bdynamic \
         -D__ANDROID__=1 \
         --target="$target" \
         -o "$output_path" \
