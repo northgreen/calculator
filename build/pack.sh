@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # pack.sh — 统一打包脚本
-# 
+#
 # 用法:
 #   ./build/pack.sh                       构建所有支持的格式
 #   ./build/pack.sh --platform linux-x64  仅构建 x64
@@ -74,29 +74,29 @@ parse_args() {
 # ============================================================
 check_prerequisites() {
     echo "=== 检查基础先决条件 ==="
-    
+
     # .NET 9 SDK
     if ! command -v dotnet &> /dev/null; then
         echo "ERROR: .NET SDK not found. Install .NET 9 SDK first."
         echo "  https://dotnet.microsoft.com/download/dotnet/9.0"
         exit 1
     fi
-    
+
     local dotnet_version
     dotnet_version=$(dotnet --version 2>/dev/null || echo "unknown")
     echo "✓ dotnet $dotnet_version"
-    
+
     # g++ 编译器
     if ! command -v g++ &> /dev/null; then
         echo "ERROR: g++ not found. Install build-essential."
         echo "  Ubuntu/Debian: sudo apt install build-essential"
         exit 1
     fi
-    
+
     local gpp_version
     gpp_version=$(g++ --version 2>/dev/null | head -n1 || echo "unknown")
     echo "✓ g++: $gpp_version"
-    
+
     # snapcraft (仅当需要构建 snap 时)
     if [[ "$TARGET_FORMAT" == "all" || "$TARGET_FORMAT" == "snap" ]]; then
         if ! command -v snapcraft &> /dev/null; then
@@ -113,13 +113,13 @@ check_prerequisites() {
 # ARM64 交叉编译先决条件
 check_arm64_prerequisites() {
     echo "=== 检查 ARM64 交叉编译先决条件 ==="
-    
+
     if ! command -v aarch64-linux-gnu-g++ &> /dev/null; then
         echo "ERROR: aarch64-linux-gnu-g++ not found."
         echo "  Ubuntu/Debian: sudo apt install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu"
         exit 1
     fi
-    
+
     local arm_gpp_version
     arm_gpp_version=$(aarch64-linux-gnu-g++ --version 2>/dev/null | head -n1 || echo "unknown")
     echo "✓ aarch64-linux-gnu-g++: $arm_gpp_version"
@@ -131,13 +131,13 @@ check_arm64_prerequisites() {
 build_calcmanager() {
     local arch="${1:-x64}"
     echo "=== 构建 CalcManager for $arch ==="
-    
+
     local calcmanager_dir="src/CalcManager"
     if [[ ! -d "$calcmanager_dir" ]]; then
         echo "ERROR: CalcManager directory not found: $calcmanager_dir"
         exit 1
     fi
-    
+
     # 使用子 shell 执行构建脚本，确保在正确的目录运行
     if (cd "$calcmanager_dir" && bash build_linux.sh "$arch"); then
         echo "✓ CalcManager for $arch 构建成功"
@@ -154,13 +154,13 @@ build_calcmanager() {
 build_dotnet() {
     local runtime="${1:-linux-x64}"
     echo "=== .NET 自包含发布 for $runtime ==="
-    
+
     dotnet publish src/Calculator.Skia.Gtk/Calculator.Skia.Gtk.csproj \
         -c Release \
         -r "$runtime" \
         --self-contained true \
         -o "dist/Calculator-$runtime/publish"
-    
+
     echo "✓ .NET publish for $runtime complete"
 }
 
@@ -170,9 +170,9 @@ build_dotnet() {
 write_version_file() {
     local output_dir="${1:-dist}"
     echo "=== 写入 VERSION 文件 ==="
-    
+
     local version="v0.0.0-dev"
-    
+
     # 尝试从 git tag 获取版本
     if command -v git &> /dev/null; then
         # 优先使用 git describe --tags
@@ -190,12 +190,12 @@ write_version_file() {
             fi
         fi
     fi
-    
+
     # 检查环境变量覆盖
     if [[ -n "${VERSION:-}" ]]; then
         version="$VERSION"
     fi
-    
+
     echo "$version" > "$output_dir/VERSION"
     echo "✓ VERSION: $version"
 }
@@ -207,20 +207,20 @@ package_zip() {
     local runtime="${1:-linux-x64}"
     local arch_suffix="${2:-x64}"
     echo "=== ZIP 打包 for $runtime ==="
-    
+
     local publish_dir="dist/Calculator-$runtime/publish"
     local zip_name="Calculator-linux-${arch_suffix}.zip"
     local zip_path="dist/$zip_name"
-    
+
     if [[ ! -d "$publish_dir" ]]; then
         echo "ERROR: Publish directory not found: $publish_dir"
         exit 1
     fi
-    
+
     # 创建扁平结构的 zip 文件
     # cd 到发布目录确保 zip 内不包含路径前缀
     (cd "$publish_dir" && zip -r "$PROJECT_DIR/$zip_path" .)
-    
+
     echo "✓ 打包完成: $zip_path"
 }
 
@@ -229,10 +229,10 @@ package_zip() {
 # ============================================================
 prepare_snap_dir() {
     echo "=== 准备 Snap 目录 ==="
-    
+
     local snap_source_dir="build/Calculator/skia"
     mkdir -p "$snap_source_dir"
-    
+
     # 复制 zip 文件到 snap 源目录
     for zip_file in dist/Calculator-linux-*.zip; do
         if [[ -f "$zip_file" ]]; then
@@ -240,7 +240,7 @@ prepare_snap_dir() {
             echo "✓ 复制 $(basename "$zip_file") 到 $snap_source_dir/"
         fi
     done
-    
+
     # 复制 VERSION 文件
     if [[ -f "dist/VERSION" ]]; then
         cp dist/VERSION "$snap_source_dir/"
@@ -256,18 +256,18 @@ package_snap() {
         echo "WARNING: snapcraft not available. Skipping snap build."
         return 0
     fi
-    
+
     echo "=== Snap 包构建 ==="
-    
+
     # 确保 snap 源目录已准备
     if [[ ! -d "build/Calculator/skia" ]]; then
         echo "ERROR: Snap source directory not found. Run prepare_snap_dir first."
         exit 1
     fi
-    
+
     # snapcraft 需要在 build 目录下运行
     (cd build && snapcraft)
-    
+
     echo "✓ Snap 包构建完成"
     echo "  输出: build/*.snap"
 }
@@ -277,83 +277,83 @@ package_snap() {
 # ============================================================
 main() {
     parse_args "$@"
-    
+
     echo "============================================"
     echo "  Calculator Build & Pack"
     echo "  Platform: $TARGET_PLATFORM"
     echo "  Format:   $TARGET_FORMAT"
     echo "  Check only: $CHECK_ONLY"
     echo "============================================"
-    
+
     # 1. 检查基础先决条件
     check_prerequisites
-    
+
     if [[ "$CHECK_ONLY" == true ]]; then
         echo ""
         echo "=== 先决条件检查完成 ==="
         exit 0
     fi
-    
+
     # 2. 根据平台检查 ARM64 交叉编译先决条件
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
         check_arm64_prerequisites
     fi
-    
+
     # 创建输出目录
     mkdir -p dist
-    
+
     # 3. 编译 C++ 引擎
     echo ""
     echo "=== 阶段 1: 编译 C++ 引擎 ==="
-    
+
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-x64" ]]; then
         build_calcmanager "x64"
     fi
-    
+
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
         build_calcmanager "arm64"
     fi
-    
+
     # 4. .NET 自包含发布
     echo ""
     echo "=== 阶段 2: .NET 自包含发布 ==="
-    
+
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-x64" ]]; then
         build_dotnet "linux-x64"
     fi
-    
+
     if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
         build_dotnet "linux-arm64"
     fi
-    
+
     # 5. 写入 VERSION 文件
     echo ""
     echo "=== 阶段 3: 版本管理 ==="
     write_version_file "dist"
-    
+
     # 6. ZIP 打包
     if [[ "$TARGET_FORMAT" == "all" || "$TARGET_FORMAT" == "zip" ]]; then
         echo ""
         echo "=== 阶段 4: ZIP 打包 ==="
-        
+
         if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-x64" ]]; then
             package_zip "linux-x64" "x64"
         fi
-        
+
         if [[ "$TARGET_PLATFORM" == "all" || "$TARGET_PLATFORM" == "linux-arm64" ]]; then
             package_zip "linux-arm64" "arm64"
         fi
     fi
-    
+
     # 7 & 8. Snap 构建
     if [[ "$TARGET_FORMAT" == "all" || "$TARGET_FORMAT" == "snap" ]]; then
         echo ""
         echo "=== 阶段 5: Snap 包构建 ==="
-        
+
         prepare_snap_dir
         package_snap
     fi
-    
+
     # 9. 输出汇总
     echo ""
     echo "============================================"
@@ -361,14 +361,11 @@ main() {
     echo "============================================"
     echo "输出目录: $(pwd)/dist"
     echo ""
-    
+
     if [[ -d "dist" ]]; then
         echo "文件列表:"
         ls -lh dist/
     fi
-    
-    echo ""
-    echo "至此结束，会话正常无需压缩"
 }
 
 main "$@"
