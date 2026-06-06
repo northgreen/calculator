@@ -302,3 +302,22 @@ src/GraphControl/GraphingImplOverrides.props
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
 dist/
+
+# ============================================
+# Additional rules for this project
+# ============================================
+
+# Uno Platform / .NET 原生库（Bin/Obj 目录规则已覆盖 .dll/.pdb/.exe）
+*.so
+*.so.*
+
+# VS Code
+.vscode/
+
+# C++ 编译产物
+*.o
+*.out
+# Snap/AppImage 构建中间文件
+build/Calculator/skia/
+build/appimage/*.AppImage
+dist/
